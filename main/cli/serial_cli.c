@@ -166,9 +166,18 @@ static int cmd_set_model_api_url(int argc, char **argv)
         arg_print_errors(stderr, model_api_url_args.end, argv[0]);
         return 1;
     }
-    llm_set_api_url(model_api_url_args.api_url->sval[0]);
-    printf("Model API URL set.\n");
-    return 0;
+    esp_err_t err = llm_set_api_url(model_api_url_args.api_url->sval[0]);
+    if (err == ESP_OK) {
+        printf("Model API URL set.\n");
+        return 0;
+    }
+    if (err == ESP_ERR_INVALID_ARG) {
+        printf("Invalid model API URL. Use an HTTPS endpoint, e.g. https://host/v1/chat/completions\n");
+        return 1;
+    }
+
+    printf("Failed to set model API URL: %s\n", esp_err_to_name(err));
+    return 1;
 }
 
 /* --- set_model_provider command --- */
