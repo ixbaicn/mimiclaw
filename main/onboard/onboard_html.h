@@ -62,8 +62,10 @@ static const char ONBOARD_HTML[] =
 "<option value='deepseek'>DeepSeek</option>"
 "<option value='custom'>OpenAI-Compatible (Custom URL)</option>"
 "</select>"
+"<div id='model_api_url_group'>"
 "<label>Model API URL (Custom Provider)</label>"
 "<input id='model_api_url' placeholder='https://host/v1/chat/completions'>"
+"</div>"
 "</div></div>"
 
 /* Telegram section */
@@ -123,7 +125,15 @@ static const char ONBOARD_HTML[] =
 "var el=document.getElementById(k);"
 "if(el && cfg[k] !== undefined && cfg[k] !== null){el.value=cfg[k]}"
 "})"
+"toggleCustomApiUrl();"
 "}).catch(()=>{})}"
+
+"function toggleCustomApiUrl(){"
+"var provider=document.getElementById('provider');"
+"var group=document.getElementById('model_api_url_group');"
+"if(!provider||!group)return;"
+"group.style.display=(provider.value==='custom')?'block':'none';"
+"}"
 
 "function scan(){"
 "var btn=event.target;btn.textContent='Scanning...';btn.disabled=true;"
@@ -146,6 +156,8 @@ static const char ONBOARD_HTML[] =
 "fetch('/save',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)})"
 ".then(()=>{document.getElementById('status').textContent='Saved! Restarting...';})"
 ".catch(()=>{document.getElementById('status').textContent='Error. Please try again.';})}"
+"document.getElementById('provider').addEventListener('change',toggleCustomApiUrl);"
+"toggleCustomApiUrl();"
 "loadConfig();"
 "</script>"
 "</body></html>";

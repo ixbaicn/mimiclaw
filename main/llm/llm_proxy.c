@@ -442,6 +442,11 @@ static esp_err_t llm_http_via_proxy(const char *post_data, resp_buf_t *rb, int *
             "Connection: close\r\n\r\n",
             path, host, s_api_key, MIMI_LLM_API_VERSION, body_len);
     }
+    if (hlen < 0 || hlen >= (int)sizeof(header)) {
+        ESP_LOGE(TAG, "HTTP header truncation: hlen=%d, cap=%u", hlen, (unsigned)sizeof(header));
+        proxy_conn_close(conn);
+        return ESP_ERR_INVALID_SIZE;
+    }
 
     if (proxy_conn_write(conn, header, hlen) < 0 ||
         proxy_conn_write(conn, post_data, body_len) < 0) {
@@ -932,6 +937,16 @@ esp_err_t llm_set_model(const char *model)
 
 esp_err_t llm_set_api_url(const char *api_url)
 {
+    char host[96];
+    char path[160];
+    int port = 443;
+    if (!api_url || api_url[0] == '\0' ||
+        !parse_https_url(api_url, host, sizeof(host), &port, path, sizeof(path))) {
+        ESP_LOGE(TAG, "Invalid model_api_url. Require HTTPS URL with host/path: %s",
+                 api_url ? api_url : "(null)");
+        return ESP_ERR_INVALID_ARG;
+    }
+
     nvs_handle_t nvs;
     ESP_ERROR_CHECK(nvs_open(MIMI_NVS_LLM, NVS_READWRITE, &nvs));
     ESP_ERROR_CHECK(nvs_set_str(nvs, MIMI_NVS_KEY_MODEL_API_URL, api_url));
