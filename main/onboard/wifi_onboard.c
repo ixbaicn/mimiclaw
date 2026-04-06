@@ -2,6 +2,7 @@
 #include "onboard_html.h"
 #include "mimi_config.h"
 #include "wifi/wifi_manager.h"
+#include "llm/llm_proxy.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -304,6 +305,23 @@ static void nvs_sync_u16_field(cJSON *root, const char *json_key,
     }
 }
 
+static esp_err_t nvs_sync_model_api_url(cJSON *root)
+{
+    cJSON *item = cJSON_GetObjectItem(root, "model_api_url");
+    if (!item || !cJSON_IsString(item)) return ESP_OK;
+
+    if (item->valuestring[0] == '\0') {
+        nvs_sync_field(root, "model_api_url", MIMI_NVS_LLM, MIMI_NVS_KEY_MODEL_API_URL);
+        return ESP_OK;
+    }
+
+    esp_err_t err = llm_set_api_url(item->valuestring);
+    if (err != ESP_OK) {
+        ESP_LOGW(TAG, "Invalid model_api_url in onboarding save: %s", item->valuestring);
+    }
+    return err;
+}
+
 static esp_err_t http_post_save(httpd_req_t *req)
 {
     int total_len = req->content_len;
@@ -344,7 +362,12 @@ static esp_err_t http_post_save(httpd_req_t *req)
     nvs_sync_field(root, "api_key",  MIMI_NVS_LLM,    MIMI_NVS_KEY_API_KEY);
     nvs_sync_field(root, "model",    MIMI_NVS_LLM,    MIMI_NVS_KEY_MODEL);
     nvs_sync_field(root, "provider", MIMI_NVS_LLM,    MIMI_NVS_KEY_PROVIDER);
-    nvs_sync_field(root, "model_api_url", MIMI_NVS_LLM, MIMI_NVS_KEY_MODEL_API_URL);
+    esp_err_t model_api_url_err = nvs_sync_model_api_url(root);
+    if (model_api_url_err != ESP_OK) {
+        cJSON_Delete(root);
+        httpd_resp_send_err(req, HTTPD_400_BAD_REQUEST, "Invalid model_api_url");
+        return ESP_FAIL;
+    }
 
     /* Telegram */
     nvs_sync_field(root, "tg_token", MIMI_NVS_TG,     MIMI_NVS_KEY_TG_TOKEN);
