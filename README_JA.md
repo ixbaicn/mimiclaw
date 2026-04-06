@@ -40,7 +40,7 @@ Telegramでメッセージを送ると、ESP32-S3がWiFi経由で受信し、エ
 - **ESP32-S3開発ボード**（16MB Flash + 8MB PSRAM搭載、例：小智AIボード、約$10）
 - **USB Type-Cケーブル**
 - **Telegram Botトークン** — Telegramで[@BotFather](https://t.me/BotFather)に話しかけて作成
-- **Anthropic APIキー** — [console.anthropic.com](https://console.anthropic.com)から取得、または **OpenAI APIキー** — [platform.openai.com](https://platform.openai.com)から取得
+- **Anthropic APIキー**（または **OpenAI / DeepSeek APIキー**）
 
 ### インストール
 
@@ -128,7 +128,8 @@ cp main/mimi_secrets.h.example main/mimi_secrets.h
 #define MIMI_SECRET_WIFI_PASS       "WiFiパスワード"
 #define MIMI_SECRET_TG_TOKEN        "123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11"
 #define MIMI_SECRET_API_KEY         "sk-ant-api03-xxxxx"
-#define MIMI_SECRET_MODEL_PROVIDER  "anthropic"     // "anthropic" または "openai"
+#define MIMI_SECRET_MODEL_PROVIDER  "anthropic"     // "anthropic" | "openai" | "deepseek" | "custom"
+#define MIMI_SECRET_MODEL_API_URL   ""              // provider=custom のとき OpenAI 互換エンドポイントを指定
 #define MIMI_SECRET_SEARCH_KEY      ""              // 任意：Brave Search APIキー
 #define MIMI_SECRET_TAVILY_KEY      ""              // 任意：Tavily APIキー（優先）
 #define MIMI_SECRET_PROXY_HOST      ""              // 任意：例 "10.0.0.1"
@@ -169,8 +170,9 @@ idf.py -p PORT flash monitor
 mimi> wifi_set MySSID MyPassword   # WiFiネットワークを変更
 mimi> set_tg_token 123456:ABC...   # Telegram Botトークンを変更
 mimi> set_api_key sk-ant-api03-... # APIキーを変更（AnthropicまたはOpenAI）
-mimi> set_model_provider openai    # プロバイダーを切替（anthropic|openai）
+mimi> set_model_provider deepseek  # プロバイダーを切替（anthropic|openai|deepseek|custom）
 mimi> set_model gpt-4o             # LLMモデルを変更
+mimi> set_model_api_url https://host/v1/chat/completions   # provider=custom のエンドポイント
 mimi> set_proxy 127.0.0.1 7897    # HTTPプロキシを設定
 mimi> clear_proxy                  # プロキシを削除
 mimi> set_search_key BSA...        # Brave Search APIキーを設定
@@ -280,7 +282,7 @@ MimiClawにはcronスケジューラが内蔵されており、AIが自律的に
 - **OTAアップデート** — WiFi経由でファームウェア更新、USB不要
 - **デュアルコア** — ネットワークI/OとAI処理が別々のCPUコアで動作
 - **HTTPプロキシ** — CONNECTトンネル対応、制限付きネットワークに対応
-- **マルチプロバイダー** — Anthropic (Claude) と OpenAI (GPT) の両方をサポート、実行時に切り替え可能
+- **マルチプロバイダー** — Anthropic (Claude)、OpenAI (GPT)、DeepSeek、および OpenAI 互換のカスタムエンドポイントをサポート
 - **Cronスケジューラ** — AIが定期・単発タスクを自律的にスケジュール、再起動後も永続化
 - **ハートビート** — タスクファイルを定期チェックし、AIを自律的に駆動
 - **ツール呼び出し** — ReActエージェントループ、両プロバイダーでツール呼び出し対応
