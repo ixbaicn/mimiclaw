@@ -153,6 +153,24 @@ static int cmd_set_model(int argc, char **argv)
     return 0;
 }
 
+/* --- set_model_api_url command --- */
+static struct {
+    struct arg_str *api_url;
+    struct arg_end *end;
+} model_api_url_args;
+
+static int cmd_set_model_api_url(int argc, char **argv)
+{
+    int nerrors = arg_parse(argc, argv, (void **)&model_api_url_args);
+    if (nerrors != 0) {
+        arg_print_errors(stderr, model_api_url_args.end, argv[0]);
+        return 1;
+    }
+    llm_set_api_url(model_api_url_args.api_url->sval[0]);
+    printf("Model API URL set.\n");
+    return 0;
+}
+
 /* --- set_model_provider command --- */
 static struct {
     struct arg_str *provider;
@@ -500,7 +518,7 @@ static int cmd_skill_search(int argc, char **argv)
 static void print_config(const char *label, const char *ns, const char *key,
                          const char *build_val, bool mask)
 {
-    char nvs_val[128] = {0};
+    char nvs_val[256] = {0};
     const char *source = "not set";
     const char *display = "(empty)";
 
@@ -563,6 +581,7 @@ static int cmd_config_show(int argc, char **argv)
     print_config("API Key",    MIMI_NVS_LLM,    MIMI_NVS_KEY_API_KEY,  MIMI_SECRET_API_KEY,    true);
     print_config("Model",      MIMI_NVS_LLM,    MIMI_NVS_KEY_MODEL,    MIMI_SECRET_MODEL,      false);
     print_config("Provider",   MIMI_NVS_LLM,    MIMI_NVS_KEY_PROVIDER, MIMI_SECRET_MODEL_PROVIDER, false);
+    print_config("Model API URL", MIMI_NVS_LLM, MIMI_NVS_KEY_MODEL_API_URL, MIMI_SECRET_MODEL_API_URL, false);
     print_config("Proxy Host", MIMI_NVS_PROXY,  MIMI_NVS_KEY_PROXY_HOST, MIMI_SECRET_PROXY_HOST, false);
     print_config_u16("Proxy Port", MIMI_NVS_PROXY, MIMI_NVS_KEY_PROXY_PORT, MIMI_SECRET_PROXY_PORT);
     print_config("Search Key", MIMI_NVS_SEARCH, MIMI_NVS_KEY_API_KEY,  MIMI_SECRET_SEARCH_KEY, true);
@@ -887,7 +906,7 @@ esp_err_t serial_cli_init(void)
     esp_console_cmd_register(&model_cmd);
 
     /* set_model_provider */
-    provider_args.provider = arg_str1(NULL, NULL, "<provider>", "Model provider (anthropic|openai)");
+    provider_args.provider = arg_str1(NULL, NULL, "<provider>", "Model provider (anthropic|openai|deepseek|custom)");
     provider_args.end = arg_end(1);
     esp_console_cmd_t provider_cmd = {
         .command = "set_model_provider",
@@ -896,6 +915,17 @@ esp_err_t serial_cli_init(void)
         .argtable = &provider_args,
     };
     esp_console_cmd_register(&provider_cmd);
+
+    /* set_model_api_url */
+    model_api_url_args.api_url = arg_str1(NULL, NULL, "<url>", "OpenAI-compatible endpoint URL");
+    model_api_url_args.end = arg_end(1);
+    esp_console_cmd_t model_api_url_cmd = {
+        .command = "set_model_api_url",
+        .help = "Set custom model API URL (used by provider=custom)",
+        .func = &cmd_set_model_api_url,
+        .argtable = &model_api_url_args,
+    };
+    esp_console_cmd_register(&model_api_url_cmd);
 
     /* skill_list */
     esp_console_cmd_t skill_list_cmd = {

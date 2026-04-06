@@ -18,7 +18,7 @@ esp_err_t llm_proxy_init(void);
 esp_err_t llm_set_api_key(const char *api_key);
 
 /**
- * Save the LLM provider to NVS. (e.g. "anthropic", "openai")
+ * Save the LLM provider to NVS. (e.g. "anthropic", "openai", "deepseek", "custom")
  */
 esp_err_t llm_set_provider(const char *provider);
 
@@ -26,6 +26,11 @@ esp_err_t llm_set_provider(const char *provider);
  * Save the model identifier to NVS.
  */
 esp_err_t llm_set_model(const char *model);
+
+/**
+ * Save the custom LLM API URL to NVS. Used by provider "custom".
+ */
+esp_err_t llm_set_api_url(const char *api_url);
 
 /* ── Tool Use Support ──────────────────────────────────────────── */
 
