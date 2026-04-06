@@ -184,9 +184,18 @@ static int cmd_set_model_provider(int argc, char **argv)
         arg_print_errors(stderr, provider_args.end, argv[0]);
         return 1;
     }
-    llm_set_provider(provider_args.provider->sval[0]);
-    printf("Model provider set.\n");
-    return 0;
+    esp_err_t err = llm_set_provider(provider_args.provider->sval[0]);
+    if (err == ESP_OK) {
+        printf("Model provider set.\n");
+        return 0;
+    }
+    if (err == ESP_ERR_INVALID_ARG) {
+        printf("Invalid provider. Use: anthropic|openai|deepseek|custom\n");
+        return 1;
+    }
+
+    printf("Failed to set model provider: %s\n", esp_err_to_name(err));
+    return 1;
 }
 
 /* --- memory_read command --- */
